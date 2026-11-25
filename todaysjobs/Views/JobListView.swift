@@ -1,8 +1,30 @@
 import SwiftUI
 
+/// The All / Pending switch under the title.
+enum JobFilter: String, CaseIterable, Identifiable {
+    case all = "All"
+    case pending = "Pending"
+
+    var id: Self { self }
+
+    /// "Pending" means status == pending, which includes overdue jobs
+    /// (matches the "N pending" count in the header).
+    func includes(_ job: Job) -> Bool {
+        switch self {
+        case .all: true
+        case .pending: job.status == .pending
+        }
+    }
+}
+
 /// "Today's Jobs": inset grouped list of the technician's jobs for the day.
 struct JobListView: View {
     @Environment(JobStore.self) private var store
+    @State private var filter: JobFilter = .all
+
+    private var visibleJobs: [Job] {
+        store.jobs.filter(filter.includes)
+    }
 
     var body: some View {
         NavigationStack {
@@ -30,7 +52,7 @@ struct JobListView: View {
         } else {
             List {
                 Section {
-                    ForEach(store.jobs) { job in
+                    ForEach(visibleJobs) { job in
                         NavigationLink(value: job.id) {
                             JobRowView(job: job, now: now)
                         }
@@ -42,16 +64,49 @@ struct JobListView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .animation(.default, value: filter)
+            .overlay {
+                if visibleJobs.isEmpty {
+                    emptyState
+                }
+            }
         }
     }
 
-    // "Wednesday, 25 November · 3 pending"
+    // "Wednesday, 25 November · 3 pending" + All / Pending
     private func header(now: Date) -> some View {
-        Text("\(Self.dayFormatter.string(from: now)) · \(store.pendingCount) pending")
-            .font(.system(size: 15))
-            .foregroundStyle(Color(.secondaryLabel))
-            .textCase(nil)
-            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 12, trailing: 0))
+        VStack(alignment: .leading, spacing: 16) {
+            Text("\(Self.dayFormatter.string(from: now)) · \(store.pendingCount) pending")
+                .font(.system(size: 15))
+                .foregroundStyle(Color(.secondaryLabel))
+
+            Picker("Show", selection: $filter) {
+                ForEach(JobFilter.allCases) { option in
+                    Text(option.rawValue).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+            .controlSize(.large)
+        }
+        .textCase(nil)
+        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 16, trailing: 0))
+    }
+
+    @ViewBuilder
+    private var emptyState: some View {
+        switch filter {
+        case .pending:
+            ContentUnavailableView {
+                Label("No pending jobs", systemImage: "checkmark.circle")
+            } description: {
+                Text("Everything waiting to start is done.")
+            } actions: {
+                Button("Show All Jobs") { filter = .all }
+            }
+        case .all:
+            ContentUnavailableView("No jobs today", systemImage: "calendar",
+                                   description: Text("Jobs assigned to you will show up here."))
+        }
     }
 
     static let dayFormatter: DateFormatter = {
