@@ -12,8 +12,7 @@ struct JobListView: View {
             }
             .navigationTitle("Today's Jobs")
             .navigationDestination(for: Job.ID.self) { id in
-                // Placeholder until the detail screen lands in step 3.
-                Text(store.job(withID: id)?.displayCustomerName ?? "Unknown customer")
+                JobDetailView(jobID: id)
             }
         }
     }
