@@ -12,6 +12,14 @@ Built for the Zuper iOS Intern Assignment, Round 1.
 
 Requirements: Swift and SwiftUI, iOS 17.0 or later, no third-party libraries.
 
+## TestFlight
+
+The app is available for **internal testing on TestFlight**.
+
+- Build: version 1.0 (1), bundle ID `com.venkateshkonnipati.todaysjobs`
+- Uploaded to App Store Connect with Transporter from a Release archive
+- Internal testers need to be added to the app in App Store Connect. Ask for an invite, then install the build from the TestFlight app on an iPhone running iOS 17 or later.
+
 ## Features
 
 ### Required
