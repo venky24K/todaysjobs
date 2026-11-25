@@ -89,5 +89,5 @@ todaysjobsTests/
 
 ## AI tools used
 
-- **Claude Code** (desktop app), used for the whole build. The session transcript is saved in this repo as `claude-code-session.txt` (exported with `/export`).
+- **Claude Code** (desktop app), used for the whole build. The full session transcript is in [claude-code-session.md](claude-code-session.md), exported from the Claude Code desktop app.
   - Share link: _add link here_
