@@ -21,9 +21,24 @@ enum JobFilter: String, CaseIterable, Identifiable {
 struct JobListView: View {
     @Environment(JobStore.self) private var store
     @State private var filter: JobFilter = .all
+    @State private var searchText = ""
+
+    private var trimmedSearch: String {
+        searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 
     private var visibleJobs: [Job] {
-        store.jobs.filter(filter.includes)
+        store.jobs
+            .filter(filter.includes)
+            .filter { matchesSearch($0) }
+    }
+
+    /// Case- and diacritic-insensitive match on customer name or address.
+    private func matchesSearch(_ job: Job) -> Bool {
+        let query = trimmedSearch
+        guard !query.isEmpty else { return true }
+        let name = job.displayCustomerName ?? "Unknown customer"
+        return name.localizedStandardContains(query) || job.address.localizedStandardContains(query)
     }
 
     var body: some View {
@@ -33,6 +48,7 @@ struct JobListView: View {
                 content(now: context.date)
             }
             .navigationTitle("Today's Jobs")
+            .searchable(text: $searchText, prompt: "Customer or address")
             .navigationDestination(for: Job.ID.self) { id in
                 JobDetailView(jobID: id)
             }
@@ -94,6 +110,15 @@ struct JobListView: View {
 
     @ViewBuilder
     private var emptyState: some View {
+        if !trimmedSearch.isEmpty {
+            ContentUnavailableView.search(text: trimmedSearch)
+        } else {
+            filterEmptyState
+        }
+    }
+
+    @ViewBuilder
+    private var filterEmptyState: some View {
         switch filter {
         case .pending:
             ContentUnavailableView {
